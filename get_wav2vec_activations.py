@@ -23,6 +23,7 @@ RESULTDIR = '/Users/gt/Documents/GitHub/aud-dnn/aud_dnn/model-actv/wav2vec/'
 RESULTDIR = (Path(RESULTDIR))
 
 rand_netw = True
+avg_type = ''
 
 if not (Path(RESULTDIR)).exists():
 	os.makedirs((Path(RESULTDIR)))
@@ -53,7 +54,7 @@ if __name__ == '__main__':
 			# Load random indices
 			print(f'________ Loading random indices from permuted architecture for {k} ________')
 			idx = d_rand_idx[k]
-			rand_w = w.view(-1)[idx].view(w.size())  # permute, and reshape back to original shape
+			rand_w = w.view(-1)[idx].view(w.size())  # permute using the stored indices, and reshape back to original shape
 			state_dict_rand[k] = rand_w
 	
 		# force to use this other state dict
@@ -83,8 +84,16 @@ if __name__ == '__main__':
 			
 			# squeeze batch
 			layer = l.squeeze()
+			
+			if avg_type == 'power_avg':
+				layer = layer**2
+				
 			# avg over time
 			layer_avg = layer.mean(axis=0).detach().numpy()
+			
+			if avg_type == 'power_avg':
+				layer_avg = np.sqrt(layer_avg)
+			
 			if i == 0: # The embedding
 				detached_activations[f'Embedding'] = layer_avg
 			else:
@@ -98,7 +107,9 @@ if __name__ == '__main__':
 		if rand_netw:
 			filename = os.path.join(RESULTDIR, f'{identifier}_activations_randnetw.pkl')
 		else:
+			# filename = os.path.join(RESULTDIR, f'{identifier}_{avg_type}_activations.pkl')
 			filename = os.path.join(RESULTDIR, f'{identifier}_activations.pkl')
-		
-		with open(filename, 'wb') as f:
-			pickle.dump(detached_activations, f)
+
+		#
+		# with open(filename, 'wb') as f:
+		# 	pickle.dump(detached_activations, f)

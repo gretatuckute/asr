@@ -1,4 +1,7 @@
-# DS2
+# ASR models from HuggingFace
 
-## Select model and audio
-Change in inference_config.py
+Repo for extracting model activations of HuggingFace models. Currently supports:
+
+- wav2vec (`get_wav2vec_activations.py`)
+- S2T (`get_S2T_activations.py`)
+

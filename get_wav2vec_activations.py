@@ -20,10 +20,16 @@ np.random.seed(0)
 
 DATADIR = '/Users/gt/Documents/GitHub/aud-dnn/data/stimuli/165_natural_sounds_16kHz/'
 RESULTDIR = '/Users/gt/Documents/GitHub/aud-dnn/aud_dnn/model-actv/wav2vec/'
+
+rand_netw = False
+avg_type = 'power_avg'
+
+if avg_type == 'power_avg':
+	# suffix RESULTDIR with 'power_avg'
+	RESULTDIR = RESULTDIR[:-1] + 'power'
+
 RESULTDIR = (Path(RESULTDIR))
 
-rand_netw = True
-avg_type = ''
 
 if not (Path(RESULTDIR)).exists():
 	os.makedirs((Path(RESULTDIR)))
@@ -75,6 +81,8 @@ if __name__ == '__main__':
 		
 		hidden = model(input_values)['hidden_states']
 		logits = model(input_values).logits
+		
+		
 	
 		detached_activations = {}
 	
@@ -98,18 +106,31 @@ if __name__ == '__main__':
 				detached_activations[f'Embedding'] = layer_avg
 			else:
 				detached_activations[f'Encoder_{i}'] = layer_avg
+				
+			if avg_type == 'power_avg': # assert that no negative values are present
+				assert np.all(layer_avg >= 0)
 		
 		# deal with logits
 		logits_layer = logits.squeeze()
-		detached_activations['Logits'] = logits_layer.mean(axis=0).detach().numpy()
+		if avg_type == 'power_avg':
+			logits_layer = logits_layer**2
+			
+		logits_avg = logits_layer.mean(axis=0).detach().numpy()
+		
+		if avg_type == 'power_avg':
+			logits_avg = np.sqrt(logits_avg)
+		
+		detached_activations['Logits'] = logits_avg
+		
+		if avg_type == 'power_avg':
+			assert np.all(logits_avg >= 0)
 		
 		# save
 		if rand_netw:
 			filename = os.path.join(RESULTDIR, f'{identifier}_activations_randnetw.pkl')
 		else:
-			# filename = os.path.join(RESULTDIR, f'{identifier}_{avg_type}_activations.pkl')
 			filename = os.path.join(RESULTDIR, f'{identifier}_activations.pkl')
 
-		#
-		# with open(filename, 'wb') as f:
-		# 	pickle.dump(detached_activations, f)
+
+		with open(filename, 'wb') as f:
+			pickle.dump(detached_activations, f)

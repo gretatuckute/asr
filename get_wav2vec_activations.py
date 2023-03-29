@@ -21,7 +21,7 @@ np.random.seed(0)
 DATADIR = '/Users/gt/Documents/GitHub/aud-dnn/data/stimuli/165_natural_sounds_16kHz/'
 RESULTDIR = '/Users/gt/Documents/GitHub/aud-dnn/aud_dnn/model-actv/wav2vec/'
 
-rand_netw = False
+rand_netw = True
 avg_type = '' # 'power_avg' or just '' for no modification
 
 if avg_type == 'power_avg':

@@ -22,7 +22,7 @@ DATADIR = '/Users/gt/Documents/GitHub/aud-dnn/data/stimuli/165_natural_sounds_16
 RESULTDIR = '/Users/gt/Documents/GitHub/aud-dnn/aud_dnn/model-actv/wav2vec/'
 
 rand_netw = False
-avg_type = 'power_avg'
+avg_type = '' # 'power_avg' or just '' for no modification
 
 if avg_type == 'power_avg':
 	# suffix RESULTDIR with 'power_avg'
@@ -45,15 +45,17 @@ if __name__ == '__main__':
 		print('OBS! RANDOM NETWORK!')
 		
 		## The following code was used to generate indices for random permutation ##
-		# d_rand_idx = {}  # create dict for storing the indices for random permutation
-		# for k, v in state_dict.items():
-		#     w = state_dict[k]
-		#     idx = torch.randperm(w.nelement())  # create random indices across all dimensions
-		#     d_rand_idx[k] = idx
-		#
-		# with open(os.path.join(os.getcwd(), 'wav2vec_randnetw_indices.pkl'), 'wb') as f:
-		#     pickle.dump(d_rand_idx, f)
-		d_rand_idx = pickle.load(open(os.path.join(os.getcwd(), 'wav2vec_randnetw_indices.pkl'), 'rb'))
+		if not Path(os.path.join(os.getcwd(), 'wav2vec_randnetw_indices.pkl')).exists():  # random network indices not generated
+			d_rand_idx = {}  # create dict for storing the indices for random permutation
+			for k, v in state_dict.items():
+				w = state_dict[k]
+				idx = torch.randperm(w.nelement())  # create random indices across all dimensions
+				d_rand_idx[k] = idx
+
+			with open(os.path.join(os.getcwd(), 'wav2vec_randnetw_indices.pkl'), 'wb') as f:
+				pickle.dump(d_rand_idx, f)
+		else:  # random network indices already generated
+			d_rand_idx = pickle.load(open(os.path.join(os.getcwd(), 'wav2vec_randnetw_indices.pkl'), 'rb'))
 		
 		for k, v in state_dict.items():
 			w = state_dict[k]
@@ -81,8 +83,7 @@ if __name__ == '__main__':
 		
 		hidden = model(input_values)['hidden_states']
 		logits = model(input_values).logits
-		
-		
+
 	
 		detached_activations = {}
 	
@@ -120,7 +121,7 @@ if __name__ == '__main__':
 		if avg_type == 'power_avg':
 			logits_avg = np.sqrt(logits_avg)
 		
-		detached_activations['Logits'] = logits_avg
+		detached_activations['Final'] = logits_avg
 		
 		if avg_type == 'power_avg':
 			assert np.all(logits_avg >= 0)
